@@ -26,26 +26,22 @@ export class PaymentsService {
   async create(createPaymentDto: CreatePaymentDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} создаёт платёж`);
 
-    // Проверка роли: только CUSTOMER или MANAGER могут создавать платеж
     if (![UserRole.CUSTOMER, UserRole.MANAGER].includes(currentUser.role)) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может создавать платеж`,
       );
     }
 
-    // Проверка продажи
     const sale = await this.salesRepository
         .findOneOrFail({ where: { id: createPaymentDto.sale_id }, relations: ['customer'] })
         .catch(() => {
           throw new NotFoundException(`Продажа с id ${createPaymentDto.sale_id} не найдена`);
         });
 
-    // Проверка: клиент может создавать платеж только для своей продажи
     if (currentUser.role === UserRole.CUSTOMER && sale.customer.id !== currentUser.id) {
       throw new UnauthorizedException('Клиенты могут создавать платежи только для своих продаж');
     }
 
-    // Проверка пользователя (плательщика)
     let user = currentUser;
     if (createPaymentDto.user_id && currentUser.role === UserRole.MANAGER) {
       user = await this.usersRepository
@@ -131,7 +127,6 @@ export class PaymentsService {
           throw new NotFoundException(`Платеж с id ${id} не найден`);
         });
 
-    // Проверка доступа
     if (
         currentUser.role === UserRole.CUSTOMER &&
         payment.user.id !== currentUser.id
@@ -156,7 +151,6 @@ export class PaymentsService {
           throw new NotFoundException(`Продажа с id ${saleId} не найдена`);
         });
 
-    // Проверка доступа
     if (
         currentUser.role === UserRole.CUSTOMER &&
         sale.customer.id !== currentUser.id
@@ -193,14 +187,12 @@ export class PaymentsService {
           throw new NotFoundException(`Платеж с id ${id} не найден`);
         });
 
-    // Проверка роли: только MANAGER может обновлять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может обновлять платеж`,
       );
     }
 
-    // Проверка страховки, если обновляется
     let insurance: Insurance | null = payment.insurance;
     if (updatePaymentDto.insurance_id) {
       insurance = await this.insuranceRepository
@@ -210,7 +202,6 @@ export class PaymentsService {
           });
     }
 
-    // Проверка суммы, если обновляется
     if (updatePaymentDto.amount) {
       const totalPayments = await this.paymentsRepository
           .createQueryBuilder('payment')
@@ -245,7 +236,6 @@ export class PaymentsService {
       throw new NotFoundException(`Платеж с id ${id} не найден`);
     }
 
-    // Проверка роли: только MANAGER может удалять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может удалять платеж`,

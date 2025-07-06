@@ -30,14 +30,12 @@ export class CarsService {
   async create(createCarDto: CreateCarDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} создаёт автомобиль`);
 
-    // Проверка роли: только MANAGER может создавать автомобиль
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может создавать автомобиль`,
       );
     }
 
-    // Проверка уникальности VIN
     const existingCar = await this.carsRepository.findOne({ where: { vin: createCarDto.vin } });
     if (existingCar) {
       throw new BadRequestException(`Автомобиль с VIN ${createCarDto.vin} уже существует`);
@@ -54,13 +52,11 @@ export class CarsService {
   async findAll(currentUser: Users, filters: { model?: string; year?: number; color?: string; status?: CarStatus }, sort: { field?: string; order?: 'ASC' | 'DESC' }, page = 1, limit = 10) {
     this.logger.log(`Пользователь ${currentUser.id} выбирает автомобили с помощью фильтров`);
 
-    // Проверка роли: клиенты видят только доступные автомобили
     const where: any = {};
     if (currentUser.role === UserRole.CUSTOMER) {
       where.status = CarStatus.AVAILABLE;
     }
 
-    // Применение фильтров
     if (filters.model) {
       where.model = Like(`%${filters.model}%`);
     }
@@ -74,12 +70,11 @@ export class CarsService {
       where.status = filters.status;
     }
 
-    // Применение сортировки
     const order: any = {};
     if (sort.field && ['model', 'year', 'price', 'mileage', 'color', 'status'].includes(sort.field)) {
       order[sort.field] = sort.order || 'ASC';
     } else {
-      order.model = 'ASC'; // Сортировка по умолчанию
+      order.model = 'ASC';
     }
 
     return this.carsRepository.find({
@@ -99,7 +94,6 @@ export class CarsService {
           throw new NotFoundException(`Автомобиль с id ${id} не найден`);
         });
 
-    // Проверка доступа: клиенты видят только доступные автомобили
     if (currentUser.role === UserRole.CUSTOMER && car.status !== CarStatus.AVAILABLE) {
       throw new UnauthorizedException('Клиенты могут просматривать только доступные автомобили');
     }
@@ -109,7 +103,7 @@ export class CarsService {
 
   async findSalesHistory(carId: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} запрашивает историю продаж автомобиля ${carId}`);
-    // Проверка роли: только MANAGER и EMPLOYEE
+
     if (![UserRole.MANAGER, UserRole.EMPLOYEE].includes(currentUser.role)) {
       throw new UnauthorizedException(
           'Только менеджеры и сотрудники могут просматривать историю продаж автомобиля',
@@ -138,7 +132,6 @@ export class CarsService {
 
   async findServicesHistory(carId: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} запрашивает историю обслуживания автомобиля ${carId}`);
-    // Проверка роли: только MANAGER и EMPLOYEE
     if (![UserRole.MANAGER, UserRole.EMPLOYEE].includes(currentUser.role)) {
       throw new UnauthorizedException(
           'Только менеджеры и сотрудники могут просматривать историю сервисов автомобиля',
@@ -172,14 +165,12 @@ export class CarsService {
           throw new NotFoundException(`Автомобиль с id ${id} не найден`);
         });
 
-    // Проверка роли: только MANAGER может обновлять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
         `Пользователь с ролью '${currentUser.role}' не может обновлять автомобиль`,
       );
     }
 
-    // Проверка уникальности VIN, если обновляется
     if (updateCarDto.vin && updateCarDto.vin !== car.vin) {
       const existingCar = await this.carsRepository.findOne({ where: { vin: updateCarDto.vin } });
       if (existingCar) {
@@ -198,14 +189,12 @@ export class CarsService {
       throw new NotFoundException(`Автомобиль с id ${id} не найден`);
     }
 
-    // Проверка роли: только MANAGER может удалять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
         `Пользователь с ролью '${currentUser.role}' не может удалять автомобиль`,
       );
     }
 
-    // Проверка связей
     const sales = await this.salesRepository.count({ where: { car: { id } } });
     const testDrives = await this.testDrivesRepository.count({ where: { car: { id } } });
     const services = await this.servicesRepository.count({ where: { car: { id } } });

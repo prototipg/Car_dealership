@@ -38,13 +38,11 @@ export class AuthService {
     async register(registerDto: RegisterDto, currentUser: Users) {
         this.logger.log(`Пользователь ${currentUser.id} пытается зарегистрировать нового пользователя: ${registerDto.email}`);
 
-        // Проверка, что только менеджер может создавать пользователей
         if (currentUser.role !== UserRole.MANAGER) {
             this.logger.warn(`Пользователь ${currentUser.id} с ролью ${currentUser.role} пытался зарегистрировать пользователя`);
             throw new UnauthorizedException('Только менеджеры могут регистрировать новых пользователей');
         }
 
-        // Проверка, что email уникален
         const existingUser = await this.usersService.findByEmail(registerDto.email);
         if (existingUser) {
             this.logger.warn(`Email ${registerDto.email} уже зарегистрирован`);

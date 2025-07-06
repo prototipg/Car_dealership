@@ -31,7 +31,7 @@ export class AuthController {
     @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Неверные входные данные.' })
     @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Недостаточно прав.' })
     @ApiBearerAuth()
-    async register(@Body() registerDto: RegisterDto, @Request() req) {
+    async register(@Body() registerDto: RegisterDto, @Request() req: any) {
         return this.authService.register(registerDto, req.user);
     }
 }

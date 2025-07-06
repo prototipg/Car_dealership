@@ -82,7 +82,6 @@ export class TestDrivesService {
       throw new NotFoundException(`Тест-драйв с id ${id} не найден`);
     }
 
-    // Проверка доступа
     if (currentUser.role === UserRole.CUSTOMER && currentUser.id !== id) {
       throw new UnauthorizedException('Клиенты могут просматривать только свои тест-драйвы');
     }
@@ -91,7 +90,6 @@ export class TestDrivesService {
 
   async findByCustomer(customerId: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} загружает тест-драйвы для клиента ${customerId}`);
-    // Проверка: менеджер или сам клиент
     if (currentUser.role !== UserRole.MANAGER && currentUser.id !== customerId) {
       throw new UnauthorizedException(
           'Только менеджер или сам клиент могут просматривать историю тест-драйвов клиента',
@@ -143,12 +141,10 @@ export class TestDrivesService {
           throw new NotFoundException(`Тест-драйв с id ${id} не найден`);
         });
 
-    // Проверка прав на обновление
     if (currentUser.role === UserRole.CUSTOMER && testDrive.customer.id !== currentUser.id) {
       throw new UnauthorizedException('Клиенты могут обновлять только свои тест-драйвы');
     }
 
-    // Обновление сотрудника, если указано
     let employee: Users | null = testDrive.employee;
     if (updateTestDriveDto.employee_id) {
       if (currentUser.role !== UserRole.MANAGER) {
@@ -163,7 +159,6 @@ export class TestDrivesService {
           });
     }
 
-    // Обновление статуса или времени
     const updatedTestDrive = Object.assign(testDrive, {
       employee,
       status: updateTestDriveDto.status || testDrive.status,
@@ -183,7 +178,6 @@ export class TestDrivesService {
           throw new NotFoundException(`Тест-драйв с id ${id} не найден`);
         });
 
-    // Проверка прав на удаление
     if (currentUser.role === UserRole.CUSTOMER && testDrive.customer.id !== currentUser.id) {
       throw new UnauthorizedException('Клиенты могут удалять только свои тест-драйвы');
     }

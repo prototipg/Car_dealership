@@ -25,21 +25,17 @@ export class SalesService {
 
   async create(createSaleDto: CreateSaleDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} создаёт распродажу`);
-
-    // Проверка роли: только MANAGER может создавать продажу
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может создавать продажу`,
       );
     }
 
-    // Проверка автомобиля
     const car = await this.carsRepository.findOne({ where: { id: createSaleDto.car_id } })
     if(!car){
       throw new NotFoundException(`Автомобиль с id ${createSaleDto.car_id} не найден`);
     }
 
-    // Проверка клиента
     const customer = await this.usersRepository.findOne({ where: { id: createSaleDto.customer_id, role: UserRole.CUSTOMER } })
     if(!customer){
       throw new NotFoundException(
@@ -58,7 +54,6 @@ export class SalesService {
       }
     }
 
-    // Проверка страховки (если указана)
     let insurance: Insurance | null = null;
     if (createSaleDto.insurance_id) {
       insurance = await this.insuranceRepository.findOne({ where: { id: createSaleDto.insurance_id } })
@@ -118,7 +113,6 @@ export class SalesService {
           throw new NotFoundException(`Продажа с id ${id} не найдена`);
         });
 
-    // Проверка доступа
     if (
         currentUser.role === UserRole.CUSTOMER &&
         sale.customer.id !== currentUser.id
@@ -170,14 +164,12 @@ export class SalesService {
           throw new NotFoundException(`Продажа с id ${id} не найдена`);
         });
 
-    // Проверка прав: только MANAGER может обновлять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может обновлять продажу`,
       );
     }
 
-    // Обновление сотрудника, если указано
     let employee: Users | null = sale.employee;
     if (updateSaleDto.employee_id) {
       employee = await this.usersRepository
@@ -189,7 +181,6 @@ export class SalesService {
           });
     }
 
-    // Обновление страховки, если указано
     let insurance: Insurance | null = sale.insurance;
     if (updateSaleDto.insurance_id) {
       insurance = await this.insuranceRepository
@@ -215,7 +206,6 @@ export class SalesService {
       throw new NotFoundException(`Продажа с id ${id} не найдена`);
     }
 
-    // Проверка прав: только MANAGER может удалять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может удалять продажу`,

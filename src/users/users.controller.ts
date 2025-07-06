@@ -56,7 +56,7 @@ export class UsersController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.CUSTOMER, UserRole.EMPLOYEE) // Remove MANAGER
+  @Roles(UserRole.CUSTOMER, UserRole.EMPLOYEE)
   @ApiOperation({ summary: 'Обновить пользователя по идентификатору' })
   @ApiParam({ name: 'id', description: 'Идентификатор пользователя для обновления', type: String })
   @ApiBody({ type: UpdateUserDto })

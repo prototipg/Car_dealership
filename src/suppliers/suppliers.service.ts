@@ -20,15 +20,11 @@ export class SuppliersService {
 
   async create(createSupplierDto: CreateSupplierDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} создаёт поставщика`);
-
-    // Проверка роли: только MANAGER может создавать запись о поставке
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может создавать запись о поставке`,
       );
     }
-
-    // Проверка автомобиля
     const car = await this.carsRepository.findOne({ where: { id: createSupplierDto.car_id } })
     if(!car) {
       throw new NotFoundException(`Автомобиль с id ${createSupplierDto.car_id} не найден`);
@@ -40,8 +36,6 @@ export class SuppliersService {
 
   async findAll(currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} запрашивает всех поставщиков`);
-
-    // Проверка роли: только MANAGER и EMPLOYEE
     if (![UserRole.MANAGER, UserRole.EMPLOYEE].includes(currentUser.role)) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может просматривать записи о поставках`,
@@ -62,7 +56,6 @@ export class SuppliersService {
 
   async findOne(id: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} запрашивает данные о поставщике ${id}`);
-    // Проверка роли: только MANAGER и EMPLOYEE
     if (![UserRole.MANAGER, UserRole.EMPLOYEE].includes(currentUser.role)) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может просматривать запись о поставке`,
@@ -90,7 +83,6 @@ export class SuppliersService {
 
   async findByCar(carId: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} ищет поставщиков для автомобиля ${carId}`);
-    // Проверка роли: только MANAGER и EMPLOYEE
     if (![UserRole.MANAGER, UserRole.EMPLOYEE].includes(currentUser.role)) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может просматривать историю поставок автомобиля`,
@@ -117,7 +109,6 @@ export class SuppliersService {
 
   async update(id: string, updateSupplierDto: UpdateSupplierDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} обновляет данные о поставщике ${id}`);
-    // Проверка роли: только MANAGER
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может обновлять запись о поставке`,
@@ -142,7 +133,6 @@ export class SuppliersService {
 
   async remove(id: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} удаляет поставщика ${id}`);
-    // Проверка роли: только MANAGER
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может удалять запись о поставке`,

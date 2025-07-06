@@ -21,27 +21,23 @@ export class InsuranceService {
   async create(createInsuranceDto: CreateInsuranceDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} создаёт страховку`);
 
-    // Проверка роли: только MANAGER может создавать страховку
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может создавать страховку`,
       );
     }
 
-    // Проверка продажи
     const sale = await this.salesRepository
         .findOneOrFail({ where: { id: createInsuranceDto.sale_id } })
         .catch(() => {
           throw new NotFoundException(`Продажа с id ${createInsuranceDto.sale_id} не найдена`);
         });
 
-    // Проверка, что у продажи ещё нет страховки
     const existingInsurance = await this.insuranceRepository.findOne({ where: { sale: { id: sale.id } } });
     if (existingInsurance) {
       throw new BadRequestException(`Продажа с id ${sale.id} уже имеет страховку`);
     }
 
-    // Проверка дат
     const startDate = new Date(createInsuranceDto.start_date);
     const endDate = new Date(createInsuranceDto.end_date);
     if (startDate >= endDate) {
@@ -107,7 +103,6 @@ export class InsuranceService {
           throw new NotFoundException(`Страховка с id ${id} не найдена`);
         });
 
-    // Проверка доступа для клиента
     if (
         currentUser.role === UserRole.CUSTOMER &&
         insurance.sale.customer.id !== currentUser.id
@@ -126,7 +121,6 @@ export class InsuranceService {
           throw new NotFoundException(`Продажа с id ${saleId} не найдена`);
         });
 
-    // Проверка доступа для клиента
     if (
         currentUser.role === UserRole.CUSTOMER &&
         sale.customer.id !== currentUser.id
@@ -171,7 +165,6 @@ export class InsuranceService {
           throw new NotFoundException(`Страховка с id ${id} не найдена`);
         });
 
-    // Проверка дат, если обновляются
     let startDate = insurance.start_date;
     let endDate = insurance.end_date;
     if (updateInsuranceDto.start_date || updateInsuranceDto.end_date) {

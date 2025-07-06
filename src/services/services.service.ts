@@ -20,22 +20,18 @@ export class ServicesService {
 
   async create(createServiceDto: CreateServiceDto, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} создаёт сервис`);
-
-    // Проверка роли: только EMPLOYEE может создавать сервис
     if (currentUser.role !== UserRole.EMPLOYEE) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может создавать запись о сервисе`,
       );
     }
 
-    // Проверка автомобиля
     const car = await this.carsRepository
         .findOneOrFail({ where: { id: createServiceDto.car_id } })
         .catch(() => {
           throw new NotFoundException(`Автомобиль с id ${createServiceDto.car_id} не найден`);
         });
 
-    // Проверка сотрудника (должен быть текущим пользователем)
     if (createServiceDto.employee_id && createServiceDto.employee_id !== currentUser.id) {
       throw new UnauthorizedException('Сотрудник может указать только себя для сервиса');
     }
@@ -99,7 +95,6 @@ export class ServicesService {
           throw new NotFoundException(`Сервис с id ${id} не найден`);
         });
 
-    // Проверка доступа
     if (
         currentUser.role === UserRole.EMPLOYEE &&
         service.employee.id !== currentUser.id
@@ -115,7 +110,6 @@ export class ServicesService {
 
   async findByCar(carId: string, currentUser: Users) {
     this.logger.log(`Пользователь ${currentUser.id} запрашивает услуги для автомобиля ${carId}`);
-    // Проверка роли: только MANAGER и EMPLOYEE
     if (![UserRole.MANAGER, UserRole.EMPLOYEE].includes(currentUser.role)) {
       throw new UnauthorizedException(
           'Только менеджеры и сотрудники могут просматривать историю сервисов автомобиля',
@@ -149,7 +143,6 @@ export class ServicesService {
           throw new NotFoundException(`Сервис с id ${id} не найден`);
         });
 
-    // Проверка роли: только MANAGER или сотрудник, создавший сервис
     if (
         currentUser.role !== UserRole.MANAGER &&
         (currentUser.role !== UserRole.EMPLOYEE || service.employee.id !== currentUser.id)
@@ -176,8 +169,6 @@ export class ServicesService {
     if(!service) {
       throw new NotFoundException(`Сервис с id ${id} не найден`);
     }
-
-    // Проверка роли: только MANAGER может удалять
     if (currentUser.role !== UserRole.MANAGER) {
       throw new UnauthorizedException(
           `Пользователь с ролью '${currentUser.role}' не может удалять сервис`,

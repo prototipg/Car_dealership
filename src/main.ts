@@ -9,10 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  // Настройка глобального префикса API
   app.setGlobalPrefix('api');
-
-  // Настройка глобального пайпа валидации
   app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -21,12 +18,9 @@ async function bootstrap() {
       }),
   );
 
-  // Настройка Swagger
   const config = swaggerConfig
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
-
-  // Запуск сервера
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);
   console.log(`Приложение запущено на: http://localhost:${port}/api`);
